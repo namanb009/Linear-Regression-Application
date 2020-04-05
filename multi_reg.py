@@ -5,15 +5,11 @@ from mpl_toolkits.mplot3d import Axes3D
 from tkinter import *
 from tkinter import filedialog
 
-def hypo(theta, values, col):
-    result = 0
-    
-    print(theta)
-    print(values)
+def hypo(theta, values, col):   
+    result = theta[0]
 
-    for i in range(col):
+    for i in range(1,col):
         result=result+ theta[i]*values[i]
-
 
     return result
 
@@ -31,36 +27,27 @@ def gradient_descent(X, y, theta, alpha, iters):
         cost, error = cost_function(X, y, theta)
         theta = theta - (alpha * (1/m) * np.dot(X.T, error))
         cost_array[i] = cost
+        
     return theta, cost_array
-
-def plotChart(iterations, cost_num):
-    fig, ax = plt.subplots()
-    ax.plot(np.arange(iterations), cost_num, 'r')
-    ax.set_xlabel('Iterations')
-    ax.set_ylabel('Cost')
-    ax.set_title('Error vs Iterations')
-    plt.style.use('fivethirtyeight')
-    plt.show()
 
 def run(filename, col, values):
     # Import data
     data = pd.read_csv(filename)
 
-    # Extract data into X and y
-    X = data.iloc[:,0:col]
-
-    y = data.iloc[:, -1]
-    y=y.rename_axis(None)
-
-    # Normalize our features
+    # Extract data into X and y and normalizing
+    X = data.iloc[:, 0:col]
     X = (X - X.mean()) / X.std()
+    
+    y = data.iloc[:, -1]
+    y = (y - y.mean()) / y.std()
+    
 
     # Add a 1 column to the start to allow vectorized gradient descent
-    X = np.c_[np.ones(X.shape[0]), X] 
+    X = np.c_[np.ones(X.shape[0]), X]
 
     # Set hyperparameters
-    alpha = 1
-    iterations = 3000
+    alpha = 0.01
+    iterations = int(e4.get())
 
     # Initialize Theta Values to 0
     theta = np.zeros(X.shape[1])
@@ -71,13 +58,17 @@ def run(filename, col, values):
     # Run Gradient Descent
     theta, cost_num = gradient_descent(X, y, theta, alpha, iterations)
 
-    # Display cost chart
-    plotChart(iterations, cost_num)
-
     final_cost, _ = cost_function(X, y, theta)
 
     print('With final theta values of {0}, cost error is {1}'.format(theta, final_cost))
-    print(hypo(theta,values,col))
+    
+    #Normalizing values
+    for i in range(len(values)):
+        values[i] = (values[i] - data.iloc[:, i].mean()) / data.iloc[:, i].std()
+
+    result = hypo(theta, values, col) * data.iloc[:, -1].std() + data.iloc[:, -1].mean()
+    print(result)
+
 
 if __name__ == "__main__":
     root = Tk()
@@ -111,9 +102,10 @@ if __name__ == "__main__":
     L12 = Label(ff, text="Current Selection", font=("Arial", 15)).grid(row=5, column=0, sticky=W, padx=2, pady=5)
     
     add = []
+
     ##########################################################################################################################
     def browse(add):
-        root.fileName = filedialog.askopenfilename()
+        root.fileName = filedialog.askopenfile()
         L13 = Label(ff, text=root.fileName, font=("Arial", 12)).grid(row=5, column=1, sticky=W, padx=2, pady=5)
 
         return root.fileName
@@ -129,7 +121,6 @@ if __name__ == "__main__":
             values.append(int(temp[i]))
 
         run(add,col,values)
-
 
 
     ##########################################################################################################################
